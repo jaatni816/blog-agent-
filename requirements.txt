@@ -1,0 +1,18 @@
+# Blogger Auto-Blog Agent - runtime dependencies (Python 3.11+)
+
+# HTTP calls to Groq and Pixabay
+requests>=2.32.0,<3.0.0
+
+# Google OAuth 2.0 (refresh-token flow used at runtime)
+google-auth>=2.34.0
+google-auth-oauthlib>=1.2.0
+
+# Blogger API v3 client
+google-api-python-client>=2.130.0
+
+# Reads secrets from a local .env file
+python-dotenv>=1.0.1
+
+# IANA timezone database (needed on Windows for Asia/Kolkata / IST).
+# Linux runners already have it, so this is a no-op there.
+tzdata>=2024.1

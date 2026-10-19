@@ -1,0 +1,31 @@
+# Secrets and local credentials - NEVER commit these
+.env
+.env.*
+!.env.example
+client_secret.json
+*client_secret*.json
+credentials.json
+token.json
+*token*.json
+
+# Generated output (previews, downloaded images, logs)
+output/
+*.log
+
+# Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

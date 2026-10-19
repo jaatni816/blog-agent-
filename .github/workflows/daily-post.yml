@@ -1,0 +1,90 @@
+name: Daily Blog Post
+
+# 30 2 * * *  =  02:30 UTC  =  08:00 IST (India Standard Time, UTC+05:30)
+# GitHub may start a scheduled run up to ~15 minutes late, so the post can
+# appear between 08:00 and 08:15 IST.
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview only - do not publish"
+        type: boolean
+        default: true
+
+# Never let two runs publish at the same time.
+concurrency:
+  group: daily-blog-post
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Write and publish one post
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write .env from GitHub secrets
+        shell: bash
+        run: |
+          cat > .env <<EOF
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL=${{ vars.GROQ_MODEL || 'openai/gpt-oss-120b' }}
+          PIXABAY_API_KEY=${{ secrets.PIXABAY_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN=${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          BLOG_ID=${{ secrets.BLOG_ID }}
+          BLOG_NICHE=${{ vars.BLOG_NICHE || 'Technology and AI tools for beginners' }}
+          BLOG_LANGUAGE=${{ vars.BLOG_LANGUAGE || 'English' }}
+          PUBLISH_AS_DRAFT=${{ vars.PUBLISH_AS_DRAFT || 'true' }}
+          EOF
+
+      - name: Decide run mode
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "args=--dry-run" >> "$GITHUB_OUTPUT"
+          else
+            echo "args=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run the agent
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          BLOG_ID: ${{ secrets.BLOG_ID }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          BLOG_NICHE: ${{ vars.BLOG_NICHE }}
+          BLOG_LANGUAGE: ${{ vars.BLOG_LANGUAGE }}
+          PUBLISH_AS_DRAFT: ${{ vars.PUBLISH_AS_DRAFT }}
+        run: python -m src.main ${{ steps.mode.outputs.args }}
+
+      - name: Upload the preview HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-${{ github.run_number }}
+          path: output/preview.html
+          if-no-files-found: ignore
