@@ -115,8 +115,9 @@ class BloggerClient:
                 "fields": LIST_FIELDS,
             }
             if with_status:
-                # 'live' + 'draft' so a draft created today also counts as used.
-                params["status"] = ["live", "draft"]
+                # 'LIVE' + 'DRAFT' so a draft created today also counts as used.
+                # (The Blogger API expects uppercase status values.)
+                params["status"] = ["LIVE", "DRAFT"]
             return self._service.posts().list(**params)
 
         try:

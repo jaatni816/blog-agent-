@@ -283,7 +283,7 @@ def load_config(env_file: Path = ENV_FILE) -> Config:
         max_attempts=_as_int("MAX_ATTEMPTS", DEFAULT_MAX_ATTEMPTS, 1, 10),
     )
 
-    if config.google_client_id.startswith("apps.googleusercontent.com") is False:
+    if not config.google_client_id.endswith(".apps.googleusercontent.com"):
         log.warning(
             "GOOGLE_CLIENT_ID does not look like a Desktop-app client id "
             "(it normally ends with apps.googleusercontent.com)."
